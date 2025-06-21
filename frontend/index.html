@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Phone Dialer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+      }
+
+      h2 {
+        margin-top: 40px;
+        margin-bottom: 15px;
+      }
+
+      #dialer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #display {
+        font-size: 24px;
+        padding: 12px;
+        margin-bottom: 20px;
+        width: 280px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: white;
+      }
+
+      .dial-pad {
+        display: grid;
+        grid-template-columns: repeat(3, 80px);
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .dial-button {
+        font-size: 22px;
+        padding: 20px;
+        border: none;
+        border-radius: 8px;
+        background-color: #ddd;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .dial-button:hover {
+        background-color: #ccc;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      button.action {
+        font-size: 18px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      button.call {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      button.end {
+        background-color: #f44336;
+        color: white;
+      }
+
+      button.clear {
+        background-color: #999;
+        color: white;
+      }
+
+      #status {
+        margin-top: 20px;
+        font-size: 16px;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Phone Dialer</h2>
+    <div id="dialer-container">
+      <div id="display" contenteditable="false"></div>
+
+      <div class="dial-pad">
+        <button class="dial-button" onclick="appendSymbol('1')">1</button>
+        <button class="dial-button" onclick="appendSymbol('2')">2</button>
+        <button class="dial-button" onclick="appendSymbol('3')">3</button>
+        <button class="dial-button" onclick="appendSymbol('4')">4</button>
+        <button class="dial-button" onclick="appendSymbol('5')">5</button>
+        <button class="dial-button" onclick="appendSymbol('6')">6</button>
+        <button class="dial-button" onclick="appendSymbol('7')">7</button>
+        <button class="dial-button" onclick="appendSymbol('8')">8</button>
+        <button class="dial-button" onclick="appendSymbol('9')">9</button>
+        <button class="dial-button" onclick="appendSymbol('*')">*</button>
+        <button class="dial-button" onclick="appendSymbol('0')">0</button>
+        <button class="dial-button" onclick="appendSymbol('+')">+</button>
+      </div>
+
+      <div class="controls">
+        <button class="action clear" onclick="backspace()">⌫</button>
+        <button class="action clear" onclick="clearNumber()">Clear</button>
+        <button class="action call" onclick="makeCall()">📞 Call</button>
+        <button class="action end" onclick="endCall()">❌ End</button>
+      </div>
+
+      <p id="status"></p>
+    </div>
+
+    <script>
+      let currentCallSid = null;
+      const display = document.getElementById("display");
+
+      function appendSymbol(symbol) {
+        display.textContent += symbol;
+      }
+
+      function backspace() {
+        display.textContent = display.textContent.slice(0, -1);
+      }
+
+      function clearNumber() {
+        display.textContent = "";
+      }
+
+      async function makeCall() {
+        const number = display.textContent.trim();
+        if (!number) {
+          alert("Please enter a number");
+          return;
+        }
+
+        try {
+          const res = await fetch("http://localhost:3000/call", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: number }),
+          });
+          const data = await res.json();
+          currentCallSid = data.sid;
+          document.getElementById(
+            "status"
+          ).textContent = `Calling ${number}...`;
+        } catch (error) {
+          console.error("Call failed:", error);
+          document.getElementById("status").textContent =
+            "Failed to make call.";
+        }
+      }
+
+      async function endCall() {
+        if (!currentCallSid) {
+          alert("No active call to hang up.");
+          return;
+        }
+
+        try {
+          await fetch("http://localhost:3000/hangup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sid: currentCallSid }),
+          });
+          document.getElementById("status").textContent = "Call ended.";
+          currentCallSid = null;
+        } catch (error) {
+          console.error("Failed to end call:", error);
+          document.getElementById("status").textContent = "Error ending call.";
+        }
+      }
+    </script>
+  </body>
+</html>
