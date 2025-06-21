@@ -151,7 +151,7 @@
         }
 
         try {
-          const res = await fetch("http://localhost:3000/call", {
+          const res = await fetch("/call", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ to: number }),
@@ -175,7 +175,7 @@
         }
 
         try {
-          await fetch("http://localhost:3000/hangup", {
+          await fetch("/hangup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sid: currentCallSid }),
